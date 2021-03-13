@@ -76,18 +76,24 @@ class KMeansModel():
                     [0.18982966, -1.97355361, 0.70592084, 0.3957741],
                     [1.2803405, 0.09821729, 0.76275827, 1.44883158]])
 
-        stopFlag = 0
-        while stopFlag == 0:
+        # Looping and updating centroids until not change in centroids occurs
+        stop_flag = 0
+        while stop_flag == 0:
             clusters = self.make_and_assign_to_clusters(X, centroids)
             
+            # Saving cetroids of previous iteration for later.
             centroids_temp = centroids
             centroids =  self.update_centroids(clusters, X)
+            
+            # Calculating difference between old and new centroids for stopping criterion.
+            assignment_stabilization_flag = numpy.sum(centroids - centroids_temp)
 
-            difference = numpy.sum(centroids - centroids_temp)
-
-            if difference == 0:
-                print("stopping criterion met")
-                stopFlag = 1
+            # Stopping criterion. If (new) assignments stabilized, break out of loop
+            if assignment_stabilization_flag == 0:
+                print("centroids/assignments stabilized. stopping criterion met.")
+                stop_flag = 1
  
+        # Obtaining label predictions
         pred_labels = self.predict_label_of_cluster(clusters, X)
+        # Saving predicted labels based on cluster assignments as output to "kmeans_output.tsv"
         numpy.savetxt("kmeans_output.tsv", pred_labels, delimiter="\t")
