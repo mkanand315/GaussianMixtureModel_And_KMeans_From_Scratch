@@ -1,6 +1,14 @@
 import numpy
 
-class KMeans():
+"""
+Citations:
+- Referenced helpful tutorial for numpy and linear algebra with
+centroid matrix https://www.youtube.com/watch?v=W4fSRHeafMo
+- Referenced for more insight on stopping criterion 
+for K-Means https://towardsdatascience.com/understanding-k-means-clustering-in-machine-learning-6a6e67336aa1
+"""
+
+class KMeansModel():
 
     """
     Initialization function for the model parameters.
@@ -10,8 +18,6 @@ class KMeans():
     def __init__(self, X, num_of_clusters):
         self.K = num_of_clusters
         self.num_of_samples, self.num_of_features = X.shape
-        # self.max_iters = 200
-
 
     """
     This function is equivalent to generating random, initial, centroids.
@@ -72,24 +78,11 @@ class KMeans():
             centroids_temp = centroids
             centroids =  self.update_centroids(clusters, X)
 
-            difference = centroids - centroids_temp
+            difference = numpy.sum(centroids - centroids_temp)
 
-            if not difference.any():
+            if difference == 0:
                 print("stopping criterion met")
                 stopFlag = 1
-            
+ 
         pred_labels = self.predict_label_of_cluster(clusters, X)
         numpy.savetxt("kmeans_output.tsv", pred_labels, delimiter="\t")
-
-
-# """
-# Script to call the above functions
-# """
-# if __name__ == '__main__':
-#     X = np.genfromtxt("Data.tsv", delimiter="\t")
-    
-#     Kmeans = KMeans(X, 3)
-#     pred_labels = Kmeans.fit(X)
-
-#     # Saving the predicted labels in 
-#     numpy.savetxt("kmeans_output.tsv", pred_labels, delimiter="\t")
