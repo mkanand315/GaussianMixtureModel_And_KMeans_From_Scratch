@@ -1,5 +1,5 @@
 import numpy
-from kmeansV2 import KMeans
+from kmeansV3 import KMeans
 
 X = numpy.genfromtxt("Data.tsv", delimiter="\t")
     
