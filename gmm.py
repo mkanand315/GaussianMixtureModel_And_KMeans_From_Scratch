@@ -108,15 +108,6 @@ def predict_labels(K, resp_matrix):
         pred_labels[i] = prediction
     return pred_labels
 
-# def compute_gaussian(datapoint, mean_j, sigma_j):
-#     num_of_features = len(datapoint)
-#     acc = (2*numpy.pi)**num_of_features
-#     acc = acc * (numpy.linalg.det(sigma_j))
-#     acc = 1.0/(numpy.sqrt(acc))
-#     x_minus_means = numpy.matrix(datapoint - mean_j)
-#     gaussian = (acc)*numpy.exp(-0.5*(x_minus_means)*numpy.linalg.inv(sigma_j)*x_minus_means.T)
-#     return gaussian
-
 def compute_gaussian(datapoint, mean_j, sigma_j):
     num_of_features = len(datapoint)
     acc = (2*numpy.pi)**(num_of_features/2)
