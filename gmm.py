@@ -1,28 +1,54 @@
 import numpy
 import math
 
+"""
+Citations:
+- Helpful resource in understanding performance differences between KMeans and GMM: 
+https://towardsdatascience.com/gaussian-mixture-models-vs-k-means-which-one-to-choose-62f2736025f0
+- Referenced for more insight on visual representation of GMM and responsibility matricies: 
+http://ethen8181.github.io/machine-learning/clustering/GMM/GMM.html
+- Referenced for numpy realted calculations for mean and covariances: 
+https://towardsdatascience.com/gaussian-mixture-models-implemented-from-scratch-1857e40ea566
+- Referenced for EM algorithm details: https://www.geeksforgeeks.org/gaussian-mixture-model/
+"""
+
 def Expectation_Maximization(X, K, epsilon):
-    # # Dividing X into 3 subparts (each array has 50 elements)
+    # Dividing X into 3 subparts (each array has 50 elements)
     subparts = numpy.array_split(X, K)
-    # # Computing the mean vector. It will have 3 elements, one mean for each subpart
+    # Computing the mean vector. It will have 3 elements, one mean for each subpart
     means = [numpy.mean(sub_arr, axis=0) for sub_arr in subparts]
-    # # Computing covariances for each of the 3 subparts
+    # Computing covariances for each of the 3 subparts
     sigma = [numpy.cov(sub_arr.T) for sub_arr in subparts]
-    # # Initializing pi vector with 3 equal probabilities as per assignment description
+    # Initializing pi vector with 3 equal probabilities as per assignment description. In general, it would be 1/K.
     pi =  [0.3333, 0.3333, 0.3333]
 
+    # Keeping track of first log_likelihood with initialized parameters to use in the stopping criterion
     old_log_likelihood = compute_log_likelihood(X, K, means, sigma, pi)
     
-    # since GMM converges in 20-30 iterations
+    # Looping 50 times since GMM usually converges in 20-30 iterations
+    """
+    Note: 
+    With max_iteration of 20, i'm getting an accuracy of 78.66 (ie. not converged)
+    With max_iteration of 25, i'm getting an accuracy of 79.33 (ie. not converged)
+    With max_iteration of 30, i'm getting an accuracy of 80.66 (ie. not converged)
+    With max_iteration of 50, i'm getting an accuracy of 82.0 
+    With max_iteration of 100, i'm getting an accuracy of 82.0 
+    """
     for i in range(50):
+        # Computing the responsibility matrix for the current iteration. It determins how like a point is to belong to a given cluster
         resp_matrix = ExpectationStep(X, K, means, sigma, pi)
+
+        # Updating the mean, covariance and pi parameters based on computed responsibility matrix
         means, sigma, pi = MaximizationStep(X, K, resp_matrix)
         
+        # Computing the log_likelihood of current iteration
         curr_log_likelihood = compute_log_likelihood(X, K, means, sigma, pi)
+
+        # Stopping criterion. If difference in log likelihood between the iterations is less than 1e^-5 then we break and have converged
         if (abs(curr_log_likelihood - old_log_likelihood) < epsilon):
             break
 
-        optimal_log_likelihood = curr_log_likelihood
+        old_log_likelihood = curr_log_likelihood
     
     return resp_matrix
 
