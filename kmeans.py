@@ -97,3 +97,10 @@ class KMeansModel():
         pred_labels = self.predict_label_of_cluster(clusters, X)
         # Saving predicted labels based on cluster assignments as output to "kmeans_output.tsv"
         numpy.savetxt("kmeans_output.tsv", pred_labels, delimiter="\t")
+        
+        
+
+if __name__ == '__main__':
+    X = numpy.genfromtxt("Data.tsv", delimiter="\t")
+    K_Means = KMeansModel(X, 3)
+    K_Means.fit(X)
