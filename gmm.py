@@ -56,7 +56,7 @@ def Expectation_Maximization(X, K, epsilon):
     for i in range(len(resp_matrix)):
         prediction = 0
         for k in range(K):
-            # This steps ensures that I assign the point the cluster which gives highest probability.
+            # This steps ensures that I assign the point to a cluster which gives highest probability.
             # Reference: https://datascience.stackexchange.com/questions/14435/how-to-get-the-probability-of-belonging-to-clusters-for-k-means
             if (resp_matrix[i][k] > resp_matrix[i][prediction]):
                 prediction = k
