@@ -111,13 +111,10 @@ def MaximizationStep(X, K, resp_matrix):
     return new_means, new_sigma, pi
 
 def compute_gaussian(datapoint, mean_j, sigma_j):
-    num_of_features = len(datapoint)
-    acc = (2*numpy.pi)**(num_of_features/2)
-    acc = acc * (numpy.linalg.det(sigma_j))**(-0.5)
-    # acc = 1.0/(numpy.sqrt(acc))
-    x_minus_means = numpy.matrix(datapoint - mean_j)
-    gaussian = (acc)*numpy.exp(-0.5*(x_minus_means)*numpy.linalg.inv(sigma_j)*x_minus_means.T)
-    return gaussian
+    sigma_invverse = numpy.linalg.inv(sigma_j)
+    sigma_reversed = 1 / numpy.sqrt(numpy.linalg.det(sigma_j))
+    difference = datapoint - mean_j
+    return sigma_reversed*((2*numpy.pi)**(-len(datapoint)/2))*numpy.exp(-0.5*numpy.dot(difference, numpy.dot(sigma_invverse, difference.T)))
 
 def main():
     X = numpy.genfromtxt("Data.tsv", delimiter="\t")
