@@ -22,7 +22,7 @@ def Expectation_Maximization(X, K, epsilon):
     # Initializing pi vector with 3 equal probabilities as per assignment description. In general, it would be 1/K.
     pi =  [0.3333, 0.3333, 0.3333]
 
-    # Keeping track of first log_likelihood with initialized parameters to use in the stopping criterion
+    # First log_likelihood with initialized parameters. This will be updated at each iteration
     old_log_likelihood = compute_log_likelihood(X, K, means, sigma, pi)
     
     # Looping 50 times since GMM usually converges in 20-30 iterations
@@ -50,7 +50,18 @@ def Expectation_Maximization(X, K, epsilon):
 
         old_log_likelihood = curr_log_likelihood
     
-    return resp_matrix
+    # Predicting the labels based on the computed responsibility matrix
+    pred_labels = numpy.zeros(len(resp_matrix), dtype=int)
+
+    for i in range(len(resp_matrix)):
+        prediction = 0
+        for k in range(K):
+            # This steps ensures that I assign the point the cluster which gives highest probability.
+            # Reference: https://datascience.stackexchange.com/questions/14435/how-to-get-the-probability-of-belonging-to-clusters-for-k-means
+            if (resp_matrix[i][k] > resp_matrix[i][prediction]):
+                prediction = k
+        pred_labels[i] = prediction
+    return pred_labels
 
 def compute_log_likelihood(X, K, means, sigma, pi):
     computed_log_likelihood = 0.0
@@ -65,7 +76,9 @@ def ExpectationStep(X, K, means, sigma, pi):
     # Computing the responsibility matrix here
     for i in range(num_of_samples):
         for j in range(K):
-            resp_matrix[i][j] = pi[j]*compute_gaussian(X[i], means[j], sigma[j])/compute_likelihood(X[i], K, means, sigma, pi)
+            numerator = pi[j]*compute_gaussian(X[i], means[j], sigma[j])
+            denominator = compute_likelihood(X[i], K, means, sigma, pi)
+            resp_matrix[i][j] = numerator / denominator
     return resp_matrix
 
 def compute_likelihood(datapoint, K, means, sigma, pi):
@@ -97,17 +110,6 @@ def MaximizationStep(X, K, resp_matrix):
     
     return new_means, new_sigma, pi
 
-def predict_labels(K, resp_matrix):
-    pred_labels = numpy.zeros(len(resp_matrix), dtype=int)
-
-    for i in range(len(resp_matrix)):
-        prediction = 0
-        for k in range(K):
-            if (resp_matrix[i][k] > resp_matrix[i][prediction]):
-                prediction = k
-        pred_labels[i] = prediction
-    return pred_labels
-
 def compute_gaussian(datapoint, mean_j, sigma_j):
     num_of_features = len(datapoint)
     acc = (2*numpy.pi)**(num_of_features/2)
@@ -119,8 +121,7 @@ def compute_gaussian(datapoint, mean_j, sigma_j):
 
 def main():
     X = numpy.genfromtxt("Data.tsv", delimiter="\t")
-    resp_matrix = Expectation_Maximization(X, 3, 1e-5)
-    pred_labels = predict_labels(3, resp_matrix)
+    pred_labels = Expectation_Maximization(X, 3, 1e-5)
     numpy.savetxt("gmm_output.tsv", pred_labels, delimiter="\t")
 
 if __name__ == '__main__':
