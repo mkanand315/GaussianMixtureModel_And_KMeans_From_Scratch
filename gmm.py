@@ -12,6 +12,11 @@ https://towardsdatascience.com/gaussian-mixture-models-implemented-from-scratch-
 - Referenced for EM algorithm details: https://www.geeksforgeeks.org/gaussian-mixture-model/
 """
 
+"""
+This function runs the EM algorithm. It makes use of the helper functions for the Expectation and Maximization steps as well
+as gaussian, likelihood, and log-likelihood computations.
+It returns an array of predicted labels after the EM algorithm has convereged or had it's max number of iterations.
+"""
 def Expectation_Maximization(X, K, epsilon):
     # Dividing X into 3 subparts (each array has 50 elements)
     subparts = numpy.array_split(X, K)
@@ -63,30 +68,44 @@ def Expectation_Maximization(X, K, epsilon):
         pred_labels[i] = prediction
     return pred_labels
 
+"""
+This function computes the log likelihood which is used to determine when the algorithm will converge
+"""
 def compute_log_likelihood(X, K, means, sigma, pi):
     computed_log_likelihood = 0.0
     for i in range (len(X)):
         computed_log_likelihood = computed_log_likelihood + numpy.log(compute_likelihood(X[i], K, means, sigma, pi))
     return computed_log_likelihood 
 
+"""
+This function carries out the Expectation step of the EM algorithm. It computes the responsibility matrix which determines
+how likely a point is to belong to a cluster k.
+"""
 def ExpectationStep(X, K, means, sigma, pi):
     num_of_samples, num_of_features = X.shape 
     resp_matrix = numpy.zeros((num_of_samples, K))
 
-    # Computing the responsibility matrix here
+    # Computing the responsibility matrix here for all points
     for i in range(num_of_samples):
         for j in range(K):
+            # Following Equation (15.12) as in the notes
             numerator = pi[j]*compute_gaussian(X[i], means[j], sigma[j])
             denominator = compute_likelihood(X[i], K, means, sigma, pi)
+            # Calculating the ij position of the responsibility matrix to determine how likely point x belongs to cluster j
             resp_matrix[i][j] = numerator / denominator
     return resp_matrix
 
 def compute_likelihood(datapoint, K, means, sigma, pi):
     probability = 0.0
     for i in range(K):
+        # As per Equation (15.12) in the notes
         probability = probability + pi[i]*compute_gaussian(datapoint, means[i], sigma[i])
     return probability
 
+"""
+This function carries out the maximization step of the EM algorithm. It improves the model parameters 
+which are the mean, covariances and pi
+"""
 def MaximizationStep(X, K, resp_matrix):
     num_of_samples, num_of_features = X.shape 
 
@@ -94,28 +113,35 @@ def MaximizationStep(X, K, resp_matrix):
     new_sigma = numpy.zeros((K, num_of_features, num_of_features))
     pi = numpy.zeros(K)
 
-    mariginal_resp_probabilities = numpy.zeros(K)
+    revised_r_matrix = numpy.zeros(K)
 
+    # Maximum Likelihood for the model parameters (mean, covariances, pi)
     for k in range(K):
+        # Calculating the new mean vector as per Equation (15.16) in the notes
         for i in range(num_of_samples):
-            mariginal_resp_probabilities[k] = mariginal_resp_probabilities[k] + resp_matrix[i][k]
+            revised_r_matrix[k] = revised_r_matrix[k] + resp_matrix[i][k]
             new_means[k] = new_means[k] + (resp_matrix[i][k]) * X[i]
-        new_means[k] = new_means[k] / mariginal_resp_probabilities[k]
+        new_means[k] = new_means[k] / revised_r_matrix[k]
 
+        # Calculating the new covariance matrix as per Equation (15.17) in the notes
         for i in range(num_of_samples):
             x_minus_means = numpy.zeros((1,num_of_features)) + X[i] - new_means[k]
-            new_sigma[k] = new_sigma[k] + ( resp_matrix[i][k] / mariginal_resp_probabilities[k]) * x_minus_means * x_minus_means.T
+            new_sigma[k] = new_sigma[k] + ( resp_matrix[i][k] / revised_r_matrix[k]) * x_minus_means * x_minus_means.T
 
-        pi[k] = mariginal_resp_probabilities[k]/num_of_samples        
+        # Calculating new pi values as per Equation (15.18) of the notes
+        pi[k] = revised_r_matrix[k]/num_of_samples        
     
     return new_means, new_sigma, pi
 
+"""
+This function computes the multivariate normal distribution
+"""
 def compute_gaussian(datapoint, mean_j, sigma_j):
-    sigma_invverse = numpy.linalg.inv(sigma_j)
-    sigma_reversed = 1 / numpy.sqrt(numpy.linalg.det(sigma_j))
-    difference = datapoint - mean_j
-    return sigma_reversed*((2*numpy.pi)**(-len(datapoint)/2))*numpy.exp(-0.5*numpy.dot(difference, numpy.dot(sigma_invverse, difference.T)))
+    return (2*numpy.pi)**(-len(datapoint)/2)*numpy.linalg.det(sigma_j)**(-1/2)*numpy.exp(-numpy.dot(numpy.dot((datapoint-mean_j).T, numpy.linalg.inv(sigma_j)), (datapoint-mean_j))/2)
 
+"""
+This is the driver function to execute the model
+"""
 def main():
     X = numpy.genfromtxt("Data.tsv", delimiter="\t")
     pred_labels = Expectation_Maximization(X, 3, 1e-5)
