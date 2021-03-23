@@ -17,33 +17,58 @@ This function runs the EM algorithm. It makes use of the helper functions for th
 as gaussian, likelihood, and log-likelihood computations.
 It returns an array of predicted labels after the EM algorithm has convereged or had it's max number of iterations.
 """
-def Expectation_Maximization(X, K, epsilon):
-    # Dividing X into 3 subparts (each array has 50 elements)
-    subparts = numpy.array_split(X, K)
-    # Computing the mean vector. It will have 3 elements, one mean for each subpart
+def Expectation_Maximization(X, KmeansOutput, K, epsilon):
+
     """
-    means = [numpy.mean(sub_arr, axis=0) for sub_arr in subparts] can be used if I want to initialize means randomly based on X
-    means = [[ 1.13597027,  0.08842168,  0.99615451,  1.01752612], [-1.01457897,  0.85326268, -1.30498732, -1.25489349], [-0.05021989, -0.88337647,  0.34773781,  0.2815273]]
-    can be used. This is the output of Kmeans for centroids after
+    Note: In order to obtain the right accruacy, as in the assignment description, I had to initialize the parameters
+    using the output of the kmeans model and compute parameter intializations based on the clusters.
+
+    The KMeansOutput parameter of this function stores the output of the KMeansModel
     """
-    means = [[ 1.13597027,  0.08842168,  0.99615451,  1.01752612], [-1.01457897,  0.85326268, -1.30498732, -1.25489349], [-0.05021989, -0.88337647,  0.34773781,  0.2815273]]
-    # Computing covariances for each of the 3 subparts
-    sigma = [numpy.cov(sub_arr.T) for sub_arr in subparts]
-    # Initializing pi vector with 3 equal probabilities as per assignment description. In general, it would be 1/K.
+    # Determining Model Parameters Initializations based on KMeansOutput from kmeans_output.tsv
+    cluster1 = []
+    cluster2 = []
+    cluster3 = []
+
+    for i in range(len(KmeansOutput)):
+        if (KmeansOutput[i] == 0):
+            cluster1.append(X[i])
+        if(KmeansOutput[i] ==  1):
+            cluster2.append(X[i])
+        if(KmeansOutput[i] == 2):
+            cluster3.append(X[i])
+
+    subpart1 = numpy.array(cluster1)
+    subpart2 = numpy.array(cluster2)
+    subpart3 = numpy.array(cluster3)
+
+    mean1 = numpy.mean(subpart1, axis=0)
+    mean2 = numpy.mean(subpart2, axis=0)
+    mean3 = numpy.mean(subpart3, axis=0)
+
+    sigma1 = numpy.cov(subpart1.T)
+    sigma2 = numpy.cov(subpart2.T)
+    sigma3 = numpy.cov(subpart3.T)
+    
+    # Appending the means and covariances to create the intializations
+    means = numpy.array([mean1, mean2, mean3])
+    sigma = numpy.array([sigma1, sigma2, sigma3])
     pi =  [0.3333, 0.3333, 0.3333]
 
     # First log_likelihood with initialized parameters. This will be updated at each iteration
     old_log_likelihood = compute_log_likelihood(X, K, means, sigma, pi)
     
-    # Looping 50 times since GMM usually converges in 20-30 iterations
     """
-    Note: 
+    Note: When using the splitting technique as in the assignment description, I obtain the following: 
     With max_iteration of 20, i'm getting an accuracy of 78.66 (ie. not converged)
     With max_iteration of 25, i'm getting an accuracy of 79.33 (ie. not converged)
     With max_iteration of 30, i'm getting an accuracy of 80.66 (ie. not converged)
     With max_iteration of 50, i'm getting an accuracy of 82.0 
     With max_iteration of 100, i'm getting an accuracy of 82.0 
+
+    When using the kmeans output to determine the intializations for means and covariances, I get accuracy of 96.67.
     """
+    # Looping 50 times since GMM usually converges in 20-30 iterations to be safe
     for i in range(50):
         # Computing the responsibility matrix for the current iteration. It determins how like a point is to belong to a given cluster
         resp_matrix = ExpectationStep(X, K, means, sigma, pi)
@@ -55,9 +80,8 @@ def Expectation_Maximization(X, K, epsilon):
         curr_log_likelihood = compute_log_likelihood(X, K, means, sigma, pi)
 
         # Stopping criterion. If difference in log likelihood between the iterations is less than 1e^-5 then we break and have converged
-        print(abs(curr_log_likelihood - old_log_likelihood))
         if (abs(curr_log_likelihood - old_log_likelihood) < epsilon):
-            print("breaking now")
+            print("Stopping criterion met. Breaking now")
             break
 
         old_log_likelihood = curr_log_likelihood
@@ -147,11 +171,13 @@ def compute_gaussian(datapoint, mean_j, sigma_j):
     return (2*numpy.pi)**(-len(datapoint)/2)*numpy.linalg.det(sigma_j)**(-1/2)*numpy.exp(-numpy.dot(numpy.dot((datapoint-mean_j).T, numpy.linalg.inv(sigma_j)), (datapoint-mean_j))/2)
 
 """
-This is the driver function to execute the model
+This is the driver function to execute the model.
 """
 def main():
     X = numpy.genfromtxt("Data.tsv", delimiter="\t")
-    pred_labels = Expectation_Maximization(X, 3, 1e-5)
+    # Using the output of Kmeans to compute initial parameters for gmm model.
+    KMeansOutput = numpy.genfromtxt("kmeans_output.tsv", delimiter="\t")
+    pred_labels = Expectation_Maximization(X, KMeansOutput, 3, 1e-5)
     numpy.savetxt("gmm_output.tsv", pred_labels, delimiter="\t")
 
 if __name__ == '__main__':
