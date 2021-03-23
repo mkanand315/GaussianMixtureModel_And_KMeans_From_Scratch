@@ -21,7 +21,12 @@ def Expectation_Maximization(X, K, epsilon):
     # Dividing X into 3 subparts (each array has 50 elements)
     subparts = numpy.array_split(X, K)
     # Computing the mean vector. It will have 3 elements, one mean for each subpart
-    means = [numpy.mean(sub_arr, axis=0) for sub_arr in subparts]
+    """
+    means = [numpy.mean(sub_arr, axis=0) for sub_arr in subparts] can be used if I want to initialize means randomly based on X
+    means = [[ 1.13597027,  0.08842168,  0.99615451,  1.01752612], [-1.01457897,  0.85326268, -1.30498732, -1.25489349], [-0.05021989, -0.88337647,  0.34773781,  0.2815273]]
+    can be used. This is the output of Kmeans for centroids after
+    """
+    means = [[ 1.13597027,  0.08842168,  0.99615451,  1.01752612], [-1.01457897,  0.85326268, -1.30498732, -1.25489349], [-0.05021989, -0.88337647,  0.34773781,  0.2815273]]
     # Computing covariances for each of the 3 subparts
     sigma = [numpy.cov(sub_arr.T) for sub_arr in subparts]
     # Initializing pi vector with 3 equal probabilities as per assignment description. In general, it would be 1/K.
@@ -50,7 +55,9 @@ def Expectation_Maximization(X, K, epsilon):
         curr_log_likelihood = compute_log_likelihood(X, K, means, sigma, pi)
 
         # Stopping criterion. If difference in log likelihood between the iterations is less than 1e^-5 then we break and have converged
+        print(abs(curr_log_likelihood - old_log_likelihood))
         if (abs(curr_log_likelihood - old_log_likelihood) < epsilon):
+            print("breaking now")
             break
 
         old_log_likelihood = curr_log_likelihood
